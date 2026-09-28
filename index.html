@@ -1,1 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outbreak</title>
 
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #10151b;
+    color: white;
+}
+
+header {
+    padding: 18px;
+    text-align: center;
+    background: #171e26;
+    border-bottom: 1px solid #303a45;
+}
+
+h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.subtitle {
+    color: #9ba7b4;
+    margin-top: 6px;
+}
+
+.game {
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat {
+    background: #1b232d;
+    border: 1px solid #303a45;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+}
+
+.stat span {
+    display: block;
+    color: #9ba7b4;
+    font-size: 13px;
+}
+
+.stat strong {
+    font-size: 20px;
+}
+
+.map {
+    position: relative;
+    height: 500px;
+    background: #17252c;
+    border: 2px solid #34434d;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+/* Simple fictional world */
+.world {
+    position: absolute;
+    width: 82%;
+    height: 70%;
+    left: 9%;
+    top: 15%;
+}
+
+.region {
+    position: absolute;
+    width: 110px;
+    height: 75px;
+    border-radius: 45% 55% 50% 40%;
+    background: #34434d;
+    border: 2px solid #53636f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.region:hover {
+    transform: scale(1.08);
+}
+
+.region.infected {
+    background: #7c3038;
+    border-color: #d75b66;
+}
+
+.region.cured {
+    background: #245c48;
+    border-color: #4caf83;
+}
+
+#north {
+    left: 12%;
+    top: 5%;
+}
+
+#west {
+    left: 0%;
+    top: 45%;
+}
+
+#central {
+    left: 38%;
+    top: 32%;
+}
+
+#east {
+    right: 0%;
+    top: 42%;
+}
+
+#south {
+    left: 40%;
+    bottom: 0%;
+}
+
+.panel {
+    margin-top: 15px;
+    background: #1b232d;
+    border: 1px solid #303a45;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+button {
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: #384756;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #4b5c6d;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.bar {
+    height: 18px;
+    background: #303a45;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+#cureFill {
+    background: #4caf83;
+}
+
+#spreadFill {
+    background: #d75b66;
+}
+
+.message {
+    margin-top: 12px;
+    min-height: 24px;
+    color: #d5dde5;
+}
+
+@media (max-width: 700px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .map {
+        height: 430px;
+    }
+
+    .region {
+        width: 85px;
+        height: 60px;
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🦠 OUTBREAK</h1>
+    <div class="subtitle">A fictional strategy game</div>
+</header>
+
+<div class="game">
+
+    <div class="stats">
+        <div class="stat">
+            <span>🧬 Mutation Points</span>
+            <strong id="points">10</strong>
+        </div>
+
+        <div class="stat">
+            <span>🌍 Infected</span>
+            <strong id="infected">100</strong>
+        </div>
+
+        <div class="stat">
+            <span>🏥 Global Health</span>
+            <strong id="health">100</strong>
+        </div>
+
+        <div class="stat">
+            <span>📅 Day</span>
+            <strong id="day">1</strong>
+        </div>
+    </div>
+
+    <div class="map">
+
+        <div class="world">
+
+            <div class="region" id="north" data-name="Northland">
+                Northland
+            </div>
+
+            <div class="region" id="west" data-name="Westreach">
+                Westreach
+            </div>
+
+            <div class="region" id="central" data-name="Centralia">
+                Centralia
+            </div>
+
+            <div class="region" id="east" data-name="Eastvale">
+                Eastvale
+            </div>
+
+            <div class="region" id="south" data-name="Southmoor">
+                Southmoor
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <h2>🧬 Evolution</h2>
+
+        <div class="buttons">
+            <button id="spreadBtn">
+                🦠 Improve Spread — 5 points
+            </button>
+
+            <button id="adaptBtn">
+                🌡️ Adaptation — 8 points
+            </button>
+
+            <button id="stealthBtn">
+                👁️ Stealth — 10 points
+            </button>
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <h2>🧪 Global Countermeasure</h2>
+
+        <div class="bar">
+            <div class="fill" id="cureFill"></div>
+        </div>
+
+        <p>
+            Research progress: <strong id="cure">0%</strong>
+        </p>
+
+    </div>
+
+    <div class="panel">
+
+        <h2>📈 Outbreak Progress</h2>
+
+        <div class="bar">
+            <div class="fill" id="spreadFill"></div>
+        </div>
+
+        <p>
+            Global spread: <strong id="spread">0%</strong>
+        </p>
+
+        <div class="message" id="message">
+            Choose a region to begin.
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let points = 10;
+let infected = 100;
+let health = 100;
+let day = 1;
+
+let spreadPower = 1;
+let adaptation = 0;
+let stealth = 0;
+
+let cure = 0;
+let spread = 0;
+
+let gameOver = false;
+
+const pointsText = document.getElementById("points");
+const infectedText = document.getElementById("infected");
+const healthText = document.getElementById("health");
+const dayText = document.getElementById("day");
+
+const cureText = document.getElementById("cure");
+const spreadText = document.getElementById("spread");
+
+const cureFill = document.getElementById("cureFill");
+const spreadFill = document.getElementById("spreadFill");
+
+const message = document.getElementById("message");
+
+const regions = document.querySelectorAll(".region");
+
+function updateScreen() {
+
+    pointsText.textContent = points;
+    infectedText.textContent = infected.toLocaleString();
+    healthText.textContent = Math.max(0, health);
+    dayText.textContent = day;
+
+    cureText.textContent = Math.min(100, cure) + "%";
+    spreadText.textContent = Math.min(100, spread) + "%";
+
+    cureFill.style.width = Math.min(100, cure) + "%";
+    spreadFill.style.width = Math.min(100, spread) + "%";
+
+    if (spread >= 100) {
+        gameOver = true;
+        message.textContent = "🏆 Victory! The fictional outbreak reached every region.";
+    }
+
+    if (cure >= 100) {
+        gameOver = true;
+        message.textContent = "🧪 Countermeasure completed. The outbreak has been stopped!";
+    }
+}
+
+function randomRegion() {
+
+    const available = [...regions].filter(
+        region => !region.classList.contains("infected")
+    );
+
+    if (available.length === 0) return;
+
+    const region =
+        available[Math.floor(Math.random() * available.length)];
+
+    region.classList.add("infected");
+
+    infected += Math.floor(Math.random() * 400) + 100;
+
+    spread += 20;
+
+    points += 4;
+
+    message.textContent =
+        "The outbreak reached " + region.dataset.name + "!";
+
+    updateScreen();
+}
+
+regions.forEach(region => {
+
+    region.addEventListener("click", () => {
+
+        if (gameOver) return;
+
+        if (region.classList.contains("infected")) {
+
+            message.textContent =
+                region.dataset.name + " is already infected.";
+
+            return;
+        }
+
+        region.classList.add("infected");
+
+        infected += 300;
+
+        spread += 20;
+
+        points += 3;
+
+        message.textContent =
+            "You established a foothold in " +
+            region.dataset.name + ".";
+
+        updateScreen();
+    });
+
+});
+
+document.getElementById("spreadBtn").addEventListener("click", () => {
+
+    if (gameOver) return;
+
+    if (points < 5) {
+
+        message.textContent =
+            "Not enough mutation points.";
+
+        return;
+    }
+
+    points -= 5;
+    spreadPower++;
+
+    message.textContent =
+        "🦠 Spread ability upgraded!";
+
+    updateScreen();
+});
+
+document.getElementById("adaptBtn").addEventListener("click", () => {
+
+    if (gameOver) return;
+
+    if (points < 8) {
+
+        message.textContent =
+            "Not enough mutation points.";
+
+        return;
+    }
+
+    points -= 8;
+    adaptation++;
+
+    message.textContent =
+        "🌡️ Adaptation upgraded!";
+
+    updateScreen();
+});
+
+document.getElementById("stealthBtn").addEventListener("click", () => {
+
+    if (gameOver) return;
+
+    if (points < 10) {
+
+        message.textContent =
+            "Not enough mutation points.";
+
+        return;
+    }
+
+    points -= 10;
+    stealth++;
+
+    message.textContent =
+        "👁️ Stealth upgraded! Countermeasure progress will slow.";
+
+    updateScreen();
+});
+
+
+setInterval(() => {
+
+    if (gameOver) return;
+
+    day++;
+
+    /*
+       Fictional game simulation.
+       This is intentionally abstract rather than
+       representing real-world disease behavior.
+    */
+
+    infected += Math.floor(
+        Math.random() * 250 * spreadPower
+    );
+
+    spread += Math.random() * (4 + spreadPower);
+
+    let researchIncrease =
+        Math.max(1, 4 - stealth * 0.5);
+
+    cure += researchIncrease;
+
+    health -= Math.floor(
+        Math.random() * 2
+    );
+
+    if (Math.random() < 0.35) {
+        randomRegion();
+    }
+
+    points += 2;
+
+    updateScreen();
+
+}, 3000);
+
+updateScreen();
+
+</script>
+
+</body>
+</html>
